@@ -1,0 +1,74 @@
+package tv.sonce.utils;
+
+import com.sun.jna.*;
+import com.sun.jna.platform.win32.WinDef.*;
+import com.sun.jna.platform.win32.WinNT.HANDLE;
+
+public class ConsoleHandler {
+
+    public static final String ANSI_RESET  = "\u001B[0m";
+
+    public static final String ANSI_BLACK  = "\u001B[30m";
+    public static final String ANSI_RED    = "\u001B[31m";
+    public static final String ANSI_GREEN  = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_BLUE   = "\u001B[34m";
+    public static final String ANSI_PURPLE = "\u001B[35m";
+    public static final String ANSI_CYAN   = "\u001B[36m";
+    public static final String ANSI_WHITE  = "\u001B[37m";
+
+    public static final String ANSI_BRIGHT_BLACK  = "\u001B[90m";
+    public static final String ANSI_BRIGHT_RED    = "\u001B[91m";
+    public static final String ANSI_BRIGHT_GREEN  = "\u001B[92m";
+    public static final String ANSI_BRIGHT_YELLOW = "\u001B[93m";
+    public static final String ANSI_BRIGHT_BLUE   = "\u001B[94m";
+    public static final String ANSI_BRIGHT_PURPLE = "\u001B[95m";
+    public static final String ANSI_BRIGHT_CYAN   = "\u001B[96m";
+    public static final String ANSI_BRIGHT_WHITE  = "\u001B[97m";
+
+    public static final String ANSI_BG_BLACK  = "\u001B[40m";
+    public static final String ANSI_BG_RED    = "\u001B[41m";
+    public static final String ANSI_BG_GREEN  = "\u001B[42m";
+    public static final String ANSI_BG_YELLOW = "\u001B[43m";
+    public static final String ANSI_BG_BLUE   = "\u001B[44m";
+    public static final String ANSI_BG_PURPLE = "\u001B[45m";
+    public static final String ANSI_BG_CYAN   = "\u001B[46m";
+    public static final String ANSI_BG_WHITE  = "\u001B[47m";
+
+    public static final String ANSI_BRIGHT_BG_BLACK  = "\u001B[100m";
+    public static final String ANSI_BRIGHT_BG_RED    = "\u001B[101m";
+    public static final String ANSI_BRIGHT_BG_GREEN  = "\u001B[102m";
+    public static final String ANSI_BRIGHT_BG_YELLOW = "\u001B[103m";
+    public static final String ANSI_BRIGHT_BG_BLUE   = "\u001B[104m";
+    public static final String ANSI_BRIGHT_BG_PURPLE = "\u001B[105m";
+    public static final String ANSI_BRIGHT_BG_CYAN   = "\u001B[106m";
+    public static final String ANSI_BRIGHT_BG_WHITE  = "\u001B[107m";
+
+    private static int brightTextColorNumber = 0;
+
+    private static String [] brightTextColorArr = {ANSI_RED, ANSI_BRIGHT_GREEN, ANSI_BRIGHT_BLUE, ANSI_BRIGHT_PURPLE};
+
+
+    public static void initWinConsole(){
+        if(System.getProperty("os.name").startsWith("Windows 10")) {
+            // Set output mode to handle virtual terminal sequences
+            Function GetStdHandleFunc = Function.getFunction("kernel32", "GetStdHandle");
+            DWORD STD_OUTPUT_HANDLE = new DWORD(-11);
+            HANDLE hOut = (HANDLE)GetStdHandleFunc.invoke(HANDLE.class, new Object[]{STD_OUTPUT_HANDLE});
+
+            DWORDByReference p_dwMode = new DWORDByReference(new DWORD(0));
+            Function GetConsoleModeFunc = Function.getFunction("kernel32", "GetConsoleMode");
+            GetConsoleModeFunc.invoke(BOOL.class, new Object[]{hOut, p_dwMode});
+
+            int ENABLE_VIRTUAL_TERMINAL_PROCESSING = 4;
+            DWORD dwMode = p_dwMode.getValue();
+            dwMode.setValue(dwMode.intValue() | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            Function SetConsoleModeFunc = Function.getFunction("kernel32", "SetConsoleMode");
+            SetConsoleModeFunc.invoke(BOOL.class, new Object[]{hOut, dwMode});
+        }
+    }
+
+    public static String getNextBrightTextColor(){
+        return brightTextColorArr[brightTextColorNumber++ % brightTextColorArr.length];
+    }
+}

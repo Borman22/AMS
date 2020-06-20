@@ -5,6 +5,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import tv.sonce.plchecker.PLKeeper;
 import tv.sonce.plchecker.entity.Event;
+import tv.sonce.utils.TimeCode;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -21,6 +22,7 @@ public class DurationTest {
 
     private final static String PATH_TO_PROPERTY = "./properties/PLChecker/checkerservice/Duration.properties";
     private static String FEATURE_NAME;
+    private static String TIME_END_PL;
     private static Duration duration;
 
     private List<Event> allEventsList;
@@ -31,6 +33,7 @@ public class DurationTest {
         Properties properties = new Properties();
         properties.load(new FileReader(PATH_TO_PROPERTY));
         FEATURE_NAME = properties.getProperty("FEATURE_NAME");
+        TIME_END_PL = properties.getProperty("TIME_END_PL");
         duration = new Duration();
     }
 
@@ -72,7 +75,7 @@ public class DurationTest {
         allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 0);
+        assertEquals(0, result.get(FEATURE_NAME).intValue());
     }
 
     @Test
@@ -83,7 +86,7 @@ public class DurationTest {
         allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 1);
+        assertEquals(1, result.get(FEATURE_NAME).intValue());
     }
 
     @Test
@@ -94,7 +97,7 @@ public class DurationTest {
         allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 0);
+        assertEquals(0, result.get(FEATURE_NAME).intValue());
     }
 
     @Test
@@ -105,7 +108,7 @@ public class DurationTest {
         allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 1);
+        assertEquals(1, result.get(FEATURE_NAME).intValue());
     }
 
     @Test
@@ -116,7 +119,7 @@ public class DurationTest {
         allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 0);
+        assertEquals(0, result.get(FEATURE_NAME).intValue());
     }
 
     @Test
@@ -127,29 +130,37 @@ public class DurationTest {
         allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 1);
+        assertEquals(1, result.get(FEATURE_NAME).intValue());
     }
 
     @Test
-    public void plEndsAtSixOclock() {
-        Event event1 = new Event(1, "", "06:00:00:00", "01:00:00:00", null, null, "0", "", "", "");
-        Event event2 = new Event(2, "", "07:00:00:00", "23:00:00:00", null, null, "0", "", "", "");
+    public void plEndsAtTimeEndPL() {
+        String timeEndPL = new TimeCode(TIME_END_PL).changeToNFramesConsideringMidnight(-25).toString();
+        Event event1 = new Event(1, "", timeEndPL, "00:00:01:00", null, null, "0", "", "", "");
         allEventsList.add(event1);
-        allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 0);
+        assertEquals(0, result.get(FEATURE_NAME).intValue());
     }
 
     @Test
-    public void plDoesNotEndAtSixOclock() {
-        Event event1 = new Event(1, "", "06:00:00:00", "01:00:00:00", null, null, "0", "", "", "");
-        Event event2 = new Event(2, "", "07:00:00:00", "22:59:59:24", null, null, "0", "", "", "");
+    public void plEndsAtTimeMoreThenTimeEndPL() {
+        String timeEndPL = new TimeCode(TIME_END_PL).changeToNFramesConsideringMidnight(-25).toString();
+        Event event1 = new Event(1, "", timeEndPL, "00:00:01:01", null, null, "0", "", "", "");
         allEventsList.add(event1);
-        allEventsList.add(event2);
 
         Map<String, Integer> result = duration.checkFeature(plKeeperMock);
-        assertEquals(result.get(FEATURE_NAME).intValue(), 1);
+        assertEquals(1, result.get(FEATURE_NAME).intValue());
+    }
+
+    @Test
+    public void plEndsAtTimeLessThenTimeEndPL() {
+        String timeEndPL = new TimeCode(TIME_END_PL).changeToNFramesConsideringMidnight(-25).toString();
+        Event event1 = new Event(1, "", timeEndPL, "00:00:00:24", null, null, "0", "", "", "");
+        allEventsList.add(event1);
+
+        Map<String, Integer> result = duration.checkFeature(plKeeperMock);
+        assertEquals(1, result.get(FEATURE_NAME).intValue());
     }
 
 }

@@ -55,7 +55,7 @@ public class NumberOfFormats extends AbstractParticularFeatureChecker {
     private int checkEachEventFromList(List<Event> eventList, String[] excludedFormats, int expectedNumberOfFormats, String errorMessage) {
         int numOfErrors = 0;
         for (Event event : eventList) {
-            if (event.getFormat().length != expectedNumberOfFormats && numberOfFormatsAfterExcluding(event.getFormat(), excludedFormats) != expectedNumberOfFormats) {
+            if (numberOfFormatsAfterExcluding(event.getFormat(), excludedFormats) != expectedNumberOfFormats) {
                 event.errors.add(errorMessage);
                 numOfErrors++;
             }

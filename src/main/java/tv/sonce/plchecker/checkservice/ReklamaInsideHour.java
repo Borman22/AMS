@@ -2,6 +2,7 @@ package tv.sonce.plchecker.checkservice;
 
 import tv.sonce.plchecker.PLKeeper;
 import tv.sonce.plchecker.entity.Event;
+import tv.sonce.utils.TimeCode;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,12 +20,12 @@ public class ReklamaInsideHour extends AbstractParticularFeatureChecker {
         Properties properties = getProperties(PATH_TO_PROPERTY);
 
         final String ERROR_MESSAGE = properties.getProperty("ERROR_MESSAGE");
-        final int FRAMES_IN_HOUR = Integer.parseInt(properties.getProperty("FRAMES_IN_HOUR"));
+        final TimeCode ONE_HOUR = new TimeCode("01:00:00:00");
 
         int numOfErrors = 0;
 
         for (List<Event> reklamBlock : plKeeper.getAllReklamBloksList()) {
-            if (reklamBlock.get(0).getTime() / FRAMES_IN_HOUR != reklamBlock.get(reklamBlock.size() - 1).getTime() / FRAMES_IN_HOUR) {
+            if (reklamBlock.get(0).getTime() / ONE_HOUR.getFrames() != (reklamBlock.get(reklamBlock.size() - 1).getTime() + reklamBlock.get(reklamBlock.size() - 1).getDuration()) / ONE_HOUR.getFrames()) {
                 for (Event reklama : reklamBlock) {
                     reklama.errors.add(ERROR_MESSAGE);
                 }

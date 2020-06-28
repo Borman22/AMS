@@ -17,25 +17,25 @@ public class ReklamaDurationInHour extends AbstractParticularFeatureChecker {
         Properties properties = getProperties(PATH_TO_PROPERTY);
 
         final String ERROR_MESSAGE = properties.getProperty("ERROR_MESSAGE");
-        final int FRAMES_IN_HOUR = Integer.parseInt(properties.getProperty("FRAMES_IN_HOUR"));
-        final int REKLAMA_DURATION_IN_HOUR = Integer.parseInt(properties.getProperty("REKLAMA_DURATION_IN_HOUR"));
+        final TimeCode REKLAMA_DURATION_IN_HOUR = new TimeCode(properties.getProperty("REKLAMA_DURATION_IN_HOUR"));
+        final TimeCode ONE_HOUR = new TimeCode("01:00:00:00");
 
         int numOfErrors = 0;
 
-        int tempHour = 0;
+        int tempHour = -1;
         int tempDuration = 0;
         List<Event> reklamEventsInCurrentHour = new ArrayList<>(50);
         for (List<Event> reklamBlock : plKeeper.getAllReklamBloksList()) {
             for (Event reklamaEvent : reklamBlock) {
-                if (reklamaEvent.getTime() / FRAMES_IN_HOUR != tempHour) {
-                    if (tempDuration > REKLAMA_DURATION_IN_HOUR) {
+                if (reklamaEvent.getTime() / ONE_HOUR.getFrames() != tempHour) {
+                    if (tempDuration > REKLAMA_DURATION_IN_HOUR.getFrames()) {
                         for (Event event : reklamEventsInCurrentHour) {
                             event.errors.add(ERROR_MESSAGE + TimeCode.framesToDelimitedStr(tempDuration));
                         }
                         numOfErrors++;
                     }
                     tempDuration = reklamaEvent.getDuration();
-                    tempHour = reklamaEvent.getTime() / FRAMES_IN_HOUR;
+                    tempHour = reklamaEvent.getTime() / ONE_HOUR.getFrames();
                     reklamEventsInCurrentHour = new ArrayList<>(50);
                     reklamEventsInCurrentHour.add(reklamaEvent);
                 } else {
@@ -43,6 +43,14 @@ public class ReklamaDurationInHour extends AbstractParticularFeatureChecker {
                     reklamEventsInCurrentHour.add(reklamaEvent);
                 }
             }
+        }
+
+        // проверка для последнего рекламного блока
+        if (tempDuration > REKLAMA_DURATION_IN_HOUR.getFrames()) {
+            for (Event event : reklamEventsInCurrentHour) {
+                event.errors.add(ERROR_MESSAGE + TimeCode.framesToDelimitedStr(tempDuration));
+            }
+            numOfErrors++;
         }
 
         Map<String, Integer> nameAndNumberOfErrors = new HashMap<>(1);

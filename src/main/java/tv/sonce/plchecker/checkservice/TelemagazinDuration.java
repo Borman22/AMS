@@ -20,13 +20,13 @@ public class TelemagazinDuration extends AbstractParticularFeatureChecker {
         Properties properties = getProperties(PATH_TO_PROPERTY);
 
         final String ERROR_MESSAGE = properties.getProperty("ERROR_MESSAGE");
-        final int TELEMAGAZIN_DURATION = Integer.parseInt(properties.getProperty("TELEMAGAZIN_DURATION"));
+        final TimeCode TELEMAGAZIN_DURATION = new TimeCode(properties.getProperty("TELEMAGAZIN_DURATION"));
 
         int numOfErrors = 0;
 
         for (List<Event> telemagazinBlock : plKeeper.getAllTelemagazinBloksList()) {
             if (TimeCode.TCDifferenceConsideringMidnight(telemagazinBlock.get(telemagazinBlock.size() - 1).getTime()
-                    + telemagazinBlock.get(telemagazinBlock.size() - 1).getDuration(), telemagazinBlock.get(0).getTime()) < TELEMAGAZIN_DURATION) {
+                    + telemagazinBlock.get(telemagazinBlock.size() - 1).getDuration(), telemagazinBlock.get(0).getTime()) < TELEMAGAZIN_DURATION.getFrames()) {
                 for (Event event : telemagazinBlock) {
                     event.errors.add(ERROR_MESSAGE);
                 }
@@ -37,15 +37,5 @@ public class TelemagazinDuration extends AbstractParticularFeatureChecker {
         Map<String, Integer> nameAndNumberOfErrors = new HashMap<>(1);
         nameAndNumberOfErrors.put(FEATURE_NAME, numOfErrors);
         return nameAndNumberOfErrors;
-    }
-
-    private boolean isThisABumper(String bumperName, String[] allBumpers) {
-        bumperName = bumperName.toLowerCase();
-        for (String currentBumper : allBumpers) {
-            if (bumperName.matches(currentBumper))
-                return true;
-        }
-
-        return false;
     }
 }

@@ -90,4 +90,17 @@ public class EroticaPlashkaTest {
         Map<String, Integer> result = eroticaPlashka.checkFeature(plKeeperMock);
         assertEquals(1, result.get(FEATURE_NAME).intValue());
     }
+
+    @Test
+    public void notErotica() {
+        Event event1 = new Event(1, "", "00:00:00:00", "00:00:00:00", null, null, "0", "EROTIKA-PLASHKA-169", "", "");
+        Event event2 = new Event(2, "", "00:00:00:00", "00:00:00:00", null, null, "0", "PR-AAAAA", "", "");
+        allEventsList.add(event1);
+        allEventsList.add(event2);
+
+        allProgramList.get(0).add(event2);
+
+        Map<String, Integer> result = eroticaPlashka.checkFeature(plKeeperMock);
+        assertEquals(0, result.get(FEATURE_NAME).intValue());
+    }
 }

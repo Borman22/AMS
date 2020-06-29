@@ -204,4 +204,27 @@ public class TcInEqualsTcOutTest {
         Map<String, Integer> result = tcInEqualsTcOut.checkFeature(plKeeperMock);
         assertEquals(0, result.get(FEATURE_NAME).intValue());
     }
+
+    @Test
+    public void tcInAndTcOutInFirsSubclipAreNull() {
+        TimeCode anyTime = new TimeCode("00:00:00:00");
+        TimeCode duration = new TimeCode("00:01:00:00");
+
+        TimeCode in1 = new TimeCode("00:00:00:00");
+        TimeCode out1 = new TimeCode(TimeCode.framesToDelimitedStr(in1.getFrames() + duration.getFrames()));
+
+        TimeCode in2 = out1;
+        TimeCode out2 = new TimeCode(TimeCode.framesToDelimitedStr(in2.getFrames() + duration.getFrames()));
+
+        Event subClip1 = new Event(1, "", anyTime.getDelimitedStr(), duration.getDelimitedStr(), null, null, "0", "currentProgram", "", "");
+        Event sugClip2 = new Event(2, "", anyTime.getDelimitedStr(), duration.getDelimitedStr(), in2.getDelimitedStr(), out2.getDelimitedStr(), "0", "currentProgram", "", "");
+
+        List<Event> program = new ArrayList<>();
+        program.add(subClip1);
+        program.add(sugClip2);
+        allProgramsList.add(program);
+
+        Map<String, Integer> result = tcInEqualsTcOut.checkFeature(plKeeperMock);
+        assertEquals(0, result.get(FEATURE_NAME).intValue());
+    }
 }

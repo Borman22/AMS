@@ -79,6 +79,18 @@ public class EroticaTimeTest {
     }
 
     @Test
+    public void notEroticaWithTimeLessThenEroticaTimeBegin() {
+        String time = new TimeCode(EROTICA_TIME_BEGIN).changeToNFramesConsideringMidnight(-1).toString();
+        Event event1 = new Event(1, "", time, "00:00:01:00", null, null, "0", "PR-AAAAAA", "", "");
+        allEventsList.add(event1);
+
+        allProgramList.get(0).add(event1);
+
+        Map<String, Integer> result = eroticaTime.checkFeature(plKeeperMock);
+        assertEquals(0, result.get(FEATURE_NAME).intValue());
+    }
+
+    @Test
     public void timeEqEroticaTimeBegin() {
         String time = new TimeCode(EROTICA_TIME_BEGIN).toString();
         Event event1 = new Event(1, "", time, "00:00:01:00", null, null, "0", "HF-Corporate", "", "");

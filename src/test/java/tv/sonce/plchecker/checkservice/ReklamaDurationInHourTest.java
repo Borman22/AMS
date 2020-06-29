@@ -94,4 +94,20 @@ public class ReklamaDurationInHourTest {
         Map<String, Integer> result = reklamaDurationInHour.checkFeature(plKeeperMock);
         assertEquals(1, result.get(FEATURE_NAME).intValue());
     }
+
+    @Test
+    public void oneBlockMoreThenMaxDurationAndClimbsOutAtAnotherHour() {
+        Event reklama1 = new Event(1, "", "00:59:00:00", "00:10:00:00", null, null, "0", "Reklama1", "", "");
+        Event reklama2 = new Event(2, "", "01:09:00:00", "00:03:00:00", null, null, "0", "Reklama2", "", "");
+
+        List<Event> reklamaBlock = new ArrayList<>();
+
+        reklamaBlock.add(reklama1);
+        reklamaBlock.add(reklama2);
+
+        allReklamBloksList.add(reklamaBlock);
+
+        Map<String, Integer> result = reklamaDurationInHour.checkFeature(plKeeperMock);
+        assertEquals(1, result.get(FEATURE_NAME).intValue());
+    }
 }

@@ -5,16 +5,21 @@ import tv.sonce.plchecker.entity.Event;
 import tv.sonce.plchecker.entity.ProgramDescription;
 import tv.sonce.utils.ExcelParser;
 import tv.sonce.utils.JsonReader;
+import tv.sonce.utils.TimeCode;
 
 import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 public class LastSkleroticFromXLS extends AbstractParticularFeatureChecker {
 
     private final String PATH_TO_PROPERTY = "./properties/PLChecker/checkerservice/LastSkleroticFromXLS.properties";
+    private int numOfErrors = 0;
+    private ExcelParser excelParser = null;
+
+    public LastSkleroticFromXLS() {}
+
+    // constructor for unit tests
+    public LastSkleroticFromXLS(ExcelParser excelParser) { this.excelParser = excelParser;}
 
     @Override
     public Map<String, Integer> checkFeature(PLKeeper plKeeper) {
@@ -32,60 +37,51 @@ public class LastSkleroticFromXLS extends AbstractParticularFeatureChecker {
 
         final String SKLEROTIC_TEMPLATE = properties.getProperty("SKLEROTIC_TEMPLATE");
         final String EMPTY_SKLEROTIC = properties.getProperty("EMPTY_SKLEROTIC");
-        final int MIN_SUBCLIP_LENGTH_IN_FRAME_FOR_SKLEROTIC = Integer.parseInt(properties.getProperty("MIN_SUBCLIP_LENGTH_IN_FRAME_FOR_SKLEROTIC"));
+        final TimeCode MIN_SUBCLIP_LENGTH_FOR_SKLEROTIC = new TimeCode(properties.getProperty("MIN_SUBCLIP_LENGTH_FOR_SKLEROTIC"));
 
         JsonReader<ProgramDescription[]> jsonReader = new JsonReader<>(PATH_TO_ALL_PROGRAMS_DESCRIPTION, new ProgramDescription[]{});
         ProgramDescription[] allProgramsDescriptions = jsonReader.getContent();
 
-        int numOfErrors = 0;
+
 
         List<List<Event>> allProgramsList = plKeeper.getAllProgramsList();
         List<Event> theLastestProgram = allProgramsList.get(allProgramsList.size() - 1);
-        Event theLastestSubclip = theLastestProgram.get(theLastestProgram.size() - 1);
+        Event theLatestSubclip = theLastestProgram.get(theLastestProgram.size() - 1);
 
-        // file "Doski" not found
-        String absoluteExcelFilePath = getAbsoluteExcelFilePath(plKeeper, PATH_TO_EXCEL_FOLDER);
-        if (absoluteExcelFilePath.equals("")) {
-            theLastestSubclip.errors.add(ERROR_MESSAGE_EXCEL_FILE_NOT_FOUND);
-            numOfErrors++;
-            Map<String, Integer> nameAndNumberOfErrors = new HashMap<>(1);
-            nameAndNumberOfErrors.put(FEATURE_NAME, numOfErrors);
-            return nameAndNumberOfErrors;
+        if(excelParser == null) {   // constructor without parameters was used
+            String absoluteExcelFilePath = getAbsoluteExcelFilePath(plKeeper, PATH_TO_EXCEL_FOLDER);
+            if (absoluteExcelFilePath.equals("")) {     // file "Doski" not found
+                theLatestSubclip.errors.add(ERROR_MESSAGE_EXCEL_FILE_NOT_FOUND);
+                numOfErrors++;
+                return returnResult();
+            }
+            excelParser = new ExcelParser(absoluteExcelFilePath, 0);
         }
-
-        ExcelParser excelParser = new ExcelParser(absoluteExcelFilePath, 0);
 
         // file "Doski" not match with playlist
-        int rowInXls = theLastestSubclip.getNumberOfEvent() + SHIFT_BTW_XLS_AND_XML_NUMS;
-        if (rowInXls >= excelParser.getSheet().size()) {       //  instead of ArrayIndexOutOfBoundsException
-            theLastestSubclip.errors.add(ERROR_MESSAGE_EXCEL_FILE_NOT_MATCH_WITH_PLAYLIST);
+        int rowNumberInXls = theLatestSubclip.getNumberOfEvent() + SHIFT_BTW_XLS_AND_XML_NUMS;
+        if (rowNumberInXls >= excelParser.getSheet().size()) {       //  instead of ArrayIndexOutOfBoundsException
+            theLatestSubclip.errors.add(ERROR_MESSAGE_EXCEL_FILE_NOT_MATCH_WITH_PLAYLIST);
             numOfErrors++;
-            Map<String, Integer> nameAndNumberOfErrors = new HashMap<>(1);
-            nameAndNumberOfErrors.put(FEATURE_NAME, numOfErrors);
-            return nameAndNumberOfErrors;
+            return returnResult();
         }
 
-        String skleroticInExcel = excelParser.getSheet().get(rowInXls).get(CELL_NUM_FOR_SKLEROTIC);
+        String skleroticInExcel = excelParser.getSheet().get(rowNumberInXls).get(CELL_NUM_FOR_SKLEROTIC);
         String skleroticName = findSklerotic(skleroticInExcel, allProgramsDescriptions);
 
         // Если длинна субклипа маленькая или склеротика не существует, то убедимся, что никакой склеротик не стоит
-        if (theLastestSubclip.getDuration() < MIN_SUBCLIP_LENGTH_IN_FRAME_FOR_SKLEROTIC || skleroticName.equals(EMPTY_SKLEROTIC)) {
-            for (String currentFormat : theLastestSubclip.getFormat()) {
-                if (currentFormat.matches(SKLEROTIC_TEMPLATE)) {
-                    theLastestSubclip.errors.add(ERROR_MESSAGE_SUPERFLUOUS_SKLEROTIC);
-                    numOfErrors++;
-                }
+        if (theLatestSubclip.getDuration() < MIN_SUBCLIP_LENGTH_FOR_SKLEROTIC.getFrames() || skleroticName.equals(EMPTY_SKLEROTIC)) {
+            if(howMuchIsThereSklerotic(SKLEROTIC_TEMPLATE, theLatestSubclip.getFormat()) != 0) {
+                theLatestSubclip.errors.add(ERROR_MESSAGE_SUPERFLUOUS_SKLEROTIC);
+                numOfErrors++;
             }
         } else {  // Если длинна субклипа большая и склеротик существует, то убедимся, что он стоит
-            if (!isThereCorrectSklerotic(skleroticName, theLastestSubclip.getFormat())) {
-                theLastestSubclip.errors.add(ERROR_MESSAGE + skleroticName);
+            if (howMuchIsThereSklerotic(skleroticName, theLatestSubclip.getFormat()) != 1 || howMuchIsThereSklerotic(SKLEROTIC_TEMPLATE, theLatestSubclip.getFormat()) != 1) {
+                theLatestSubclip.errors.add(ERROR_MESSAGE + skleroticName);
                 numOfErrors++;
             }
         }
-
-        Map<String, Integer> nameAndNumberOfErrors = new HashMap<>(1);
-        nameAndNumberOfErrors.put(FEATURE_NAME, numOfErrors);
-        return nameAndNumberOfErrors;
+        return returnResult();
     }
 
     private String getAbsoluteExcelFilePath(PLKeeper plKeeper, String PATH_TO_EXCEL_FOLDER) {
@@ -104,12 +100,8 @@ public class LastSkleroticFromXLS extends AbstractParticularFeatureChecker {
         return absoluteExcelFilePath;
     }
 
-    private boolean isThereCorrectSklerotic(String skleroticName, String[] formats) {
-        for (String currentFormat : formats) {
-            if (skleroticName.matches(currentFormat))
-                return true;
-        }
-        return false;
+    private int howMuchIsThereSklerotic(String skleroticName, String[] formats) {
+        return (int) Arrays.stream(formats).filter(currentFormat -> currentFormat.matches(skleroticName)).count();
     }
 
     private String findSklerotic(String skleroticInExcel, ProgramDescription[] allProgramsDescriptions) {
@@ -120,5 +112,11 @@ public class LastSkleroticFromXLS extends AbstractParticularFeatureChecker {
             }
         }
         return "";
+    }
+
+    private Map<String, Integer> returnResult(){
+        Map<String, Integer> nameAndNumberOfErrors = new HashMap<>(1);
+        nameAndNumberOfErrors.put(FEATURE_NAME, numOfErrors);
+        return nameAndNumberOfErrors;
     }
 }

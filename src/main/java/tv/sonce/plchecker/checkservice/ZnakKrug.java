@@ -52,7 +52,7 @@ public class ZnakKrug extends AbstractParticularFeatureChecker {
 
             if (!znakKrug.equals("")) {
                 for (Event subclip : currentProgram) {
-                    if (!isThereZnakKrug(znakKrug, subclip.getFormat())) {
+                    if (howManyIsThereZnakKrug(znakKrug, subclip.getFormat()) != 1 || howManyIsThereZnakKrug(COMMON_ZNAK_KRUG_TEMPLATE, subclip.getFormat()) != 1) {
                         subclip.errors.add(ERROR_MESSAGE);
                         numOfErrors++;
                     }
@@ -60,7 +60,7 @@ public class ZnakKrug extends AbstractParticularFeatureChecker {
             } else {
                 // если знак круг не найден, то убедиться, что его нет ни на каком субклипе
                 for (Event subclip : currentProgram) {
-                    if (isThereZnakKrug(COMMON_ZNAK_KRUG_TEMPLATE, subclip.getFormat())) {
+                    if (howManyIsThereZnakKrug(COMMON_ZNAK_KRUG_TEMPLATE, subclip.getFormat()) != 0) {
                         subclip.errors.add(ERROR_MESSAGE);
                         numOfErrors++;
                     }
@@ -81,12 +81,13 @@ public class ZnakKrug extends AbstractParticularFeatureChecker {
         return null;
     }
 
-    private boolean isThereZnakKrug(String znakKrug, String[] formats) {
+    private int howManyIsThereZnakKrug(String znakKrug, String[] formats) {
+        int numberOfZnakKrug = 0;
         for (String currentFromat : formats) {
-            if (znakKrug.equals(currentFromat))
-                return true;
+            if (currentFromat.matches(znakKrug))
+                numberOfZnakKrug++;
         }
-        return false;
+        return numberOfZnakKrug;
     }
 
     private String findZnakKrug(Event event, ProgramDescription[] allProgramsDescriptions) {

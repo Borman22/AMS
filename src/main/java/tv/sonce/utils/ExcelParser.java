@@ -3,12 +3,9 @@ package tv.sonce.utils;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
-import tv.sonce.exceptions.ClosingFileExceptionRT;
-import tv.sonce.exceptions.FileNotFoundExceptionRT;
-import tv.sonce.exceptions.ReadingFileExceptionRT;
+import tv.sonce.exceptions.FileProcessingException;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,16 +18,14 @@ public class ExcelParser {
         HSSFWorkbook myExcelBook;
         try {
             myExcelBook = new HSSFWorkbook(new FileInputStream(file));
-        } catch (FileNotFoundException e) {
-            throw new FileNotFoundExceptionRT(e.getMessage());
         } catch (IOException e) {
-            throw new ReadingFileExceptionRT(e.getMessage());
+            throw new FileProcessingException(e);
         }
         feelSheet(myExcelBook.getSheetAt(sheetNumber));
         try {
             myExcelBook.close();
         } catch (IOException e) {
-            throw new ClosingFileExceptionRT(e.getMessage());
+            throw new FileProcessingException(e);
         }
     }
 

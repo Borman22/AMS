@@ -1,11 +1,9 @@
 package tv.sonce.properties;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
-import tv.sonce.exceptions.FileNotFoundExceptionRT;
-import tv.sonce.exceptions.ReadingFileExceptionRT;
+import tv.sonce.exceptions.FileProcessingException;
 
 public class PlKeeperProperties {
 
@@ -44,17 +42,14 @@ public class PlKeeperProperties {
     Properties properties = new Properties();
     try (FileReader fileReader = new FileReader(PATH_TO_PROPERTY)) {
       properties.load(fileReader);
-    } catch (FileNotFoundException e) {
-      throw new FileNotFoundExceptionRT(e.getMessage());
     } catch (IOException e) {
-      throw new ReadingFileExceptionRT(e.getMessage());
+      throw new FileProcessingException(e);
     }
 
     PATH_TO_PL = properties.getProperty("PATH_TO_PL");
     MAX_NUM_OF_PROGRAMS = Integer.parseInt(properties.getProperty("MAX_NUM_OF_PROGRAMS"));
     MAX_REKLAMA_DURATION = Integer.parseInt(properties.getProperty("MAX_REKLAMA_DURATION"));
-    MIN_EVENTS_IN_REKLAM_BLOCK = Integer
-        .parseInt(properties.getProperty("MIN_EVENTS_IN_REKLAM_BLOCK"));
+    MIN_EVENTS_IN_REKLAM_BLOCK = Integer.parseInt(properties.getProperty("MIN_EVENTS_IN_REKLAM_BLOCK"));
     PATH_TO_NOT_CONSIDERED_A_PROGRAM = properties.getProperty("PATH_TO_NOT_CONSIDERED_A_PROGRAM");
     TC_DEVIATION = Integer.parseInt(properties.getProperty("TC_DEVIATION"));
 

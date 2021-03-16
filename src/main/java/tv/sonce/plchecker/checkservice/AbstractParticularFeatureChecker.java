@@ -1,9 +1,7 @@
 package tv.sonce.plchecker.checkservice;
 
-import tv.sonce.exceptions.FileNotFoundExceptionRT;
-import tv.sonce.exceptions.ReadingFileExceptionRT;
+import tv.sonce.exceptions.FileProcessingException;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
@@ -16,13 +14,11 @@ public abstract class AbstractParticularFeatureChecker implements IParticularFea
 
         Properties properties = new Properties();
 
-        try {
-            properties.load(new FileReader(PATH_TO_PROPERTY));
+        try (FileReader fileReader = new FileReader(PATH_TO_PROPERTY)) {
+            properties.load(fileReader);
             FEATURE_NAME = properties.getProperty("FEATURE_NAME");
-        } catch (FileNotFoundException e) {
-            throw new FileNotFoundExceptionRT(e.getMessage());
         } catch (IOException e) {
-            throw new ReadingFileExceptionRT(e.getMessage());
+            throw new FileProcessingException(e);
         }
         return properties;
     }
